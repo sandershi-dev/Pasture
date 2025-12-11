@@ -1,0 +1,4 @@
+fastapi[standard]
+mysql-connector-python
+passlib[bcrypt]
+argon2_cffi
