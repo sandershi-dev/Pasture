@@ -1,7 +1,7 @@
 # controllers.py (MVC - Controller layer) with Improved HTTP Error Responses
 from fastapi import APIRouter, HTTPException, status
-from models.User import UserCreate, UserUpdate, UserResponse
-from services.User import create_user, get_all_users, get_user, update_user, delete_user
+from users.models import UserCreate, UserUpdate, UserResponse
+from users.services import create_user, get_all_users, get_user, update_user, delete_user
 
 router = APIRouter(prefix="/users", tags=["Users"])
 

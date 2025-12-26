@@ -1,7 +1,7 @@
 # main.py
 from fastapi import FastAPI
-from controllers.User import router as UserController
-from controllers.Tenant import router as TenantController
+from users.controllers import router as UserController
+from tenants.controllers import router as TenantController
 
 
 app = FastAPI(title="MVC User API")

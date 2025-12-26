@@ -2,9 +2,11 @@
 import uuid
 from typing import Dict, Optional, List
 from passlib.context import CryptContext
-from models.User import UserCreate, UserUpdate
+from users.models import UserCreate, UserUpdate
 from database.database import get_connection
 import mysql.connector
+from typing import Literal, Optional, List, Dict
+
 
 # -------------------------------------
 # Password Hashing (Argon2)
@@ -18,36 +20,43 @@ def hash_password(password: str) -> str:
 # Helper: Safe DB Execution Wrapper
 # -------------------------------------
 
-def execute_query(query, params=None, fetchone=False, fetchall=False):
+
+def execute_query(
+    query: str,
+    params: tuple | None = None,
+    fetch: Literal["one", "all", None] = None
+):
     conn = None
+    cursor = None
+
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
+        cursor.execute(query, params or ())
 
-        cursor.execute(query, params or [])
+        result = None
+        if cursor.with_rows:
+            if fetch == "one":
+                result = cursor.fetchone()
+            elif fetch == "all":
+                result = cursor.fetchall()
 
-        # ---- FIX 1: Only fetch if SELECT returns a result set ----
-        has_resultset = cursor.with_rows
-
-        # ---- FIX 2: Consume remaining results to avoid unread result errors ----
+        # consume remaining result sets (important for MySQL)
         while cursor.nextset():
             pass
 
-        conn.commit()
+        # commit only if not SELECT
+        if not cursor.with_rows:
+            conn.commit()
 
-        if has_resultset:
-            if fetchone:
-                return cursor.fetchone()
-            if fetchall:
-                return cursor.fetchall()
+        return result if fetch else True
 
-        # Non-select queries return True
-        return True
-
-    except Exception as e:
+    except mysql.connector.Error as e:
         raise Exception(f"Database error: {e}")
 
     finally:
+        if cursor:
+            cursor.close()
         if conn:
             conn.close()
 
@@ -131,7 +140,5 @@ def update_user(user_id: str, data: UserUpdate) -> Optional[Dict]:
 
 def delete_user(user_id: str) -> bool:
     query = "DELETE FROM users WHERE id = %s"
-    execute_query(query, (user_id,))
-
-    # Check if deleted
-    return get_user(user_id) is None
+    result = execute_query(query, (user_id,))
+    return result

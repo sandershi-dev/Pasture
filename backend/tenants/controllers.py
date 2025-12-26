@@ -1,7 +1,7 @@
 # tenants/controllers.py
 from fastapi import APIRouter, HTTPException, status
-from models.Tenant import TenantCreate, TenantUpdate, TenantResponse
-from services.Tenant import (
+from tenants.models import TenantCreate, TenantUpdate, TenantResponse
+from tenants.services import (
     create_tenant,
     get_all_tenants,
     get_tenant,
